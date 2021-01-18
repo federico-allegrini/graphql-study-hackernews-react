@@ -6,15 +6,18 @@ import {
   createHttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
+import { setContext } from "@apollo/client/link/context"; // Add this
 import App from "./components/App";
 import { BrowserRouter } from "react-router-dom";
 import reportWebVitals from "./reportWebVitals";
 import "./styles/index.css";
+import { AUTH_TOKEN } from "./constants";
 
 const httpLink = createHttpLink({ uri: "http://localhost:4000" });
+
+// Add this
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem(AUTH_TOKEN);
   return {
     headers: {
       ...headers,
@@ -22,8 +25,9 @@ const authLink = setContext((_, { headers }) => {
     },
   };
 });
+
 const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: authLink.concat(httpLink), // Add this
   cache: new InMemoryCache(),
 });
 
