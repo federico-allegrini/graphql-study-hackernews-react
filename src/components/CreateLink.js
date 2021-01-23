@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useMutation, gql } from "@apollo/client";
 import { useHistory } from "react-router";
+import { FEED_QUERY } from "./LinkList";
 
 const CREATE_LINK_MUTATION = gql`
   mutation PostMutation($description: String!, $url: String!) {
     post(description: $description, url: $url) {
       id
-      #   createdAt
+      createdAt
       url
       description
     }
@@ -25,6 +26,19 @@ const CreateLink = () => {
     variables: {
       description: formState.description,
       url: formState.url,
+    },
+    update: (cache, { data: { post } }) => {
+      const data = cache.readQuery({
+        query: FEED_QUERY,
+      });
+      cache.writeQuery({
+        query: FEED_QUERY,
+        data: {
+          feed: {
+            links: [post, ...data.feed.links],
+          },
+        },
+      });
     },
     onCompleted: () => history.push("/"),
   });
