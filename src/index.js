@@ -12,8 +12,21 @@ import { BrowserRouter } from "react-router-dom";
 import reportWebVitals from "./reportWebVitals";
 import "./styles/index.css";
 import { AUTH_TOKEN } from "./constants";
+import { split } from "@apollo/client";
+import { WebSocketLink } from "@apollo/client/link/ws";
+import { getMainDefinition } from "@apollo/client/utilities";
 
 const httpLink = createHttpLink({ uri: "http://localhost:4000" });
+
+const wsLink = new WebSocketLink({
+  uri: `ws://localhost:4000/graphql`,
+  options: {
+    reconnect: true,
+    connectionParams: {
+      authToken: localStorage.getItem(AUTH_TOKEN),
+    },
+  },
+});
 
 // Add this
 const authLink = setContext((_, { headers }) => {
@@ -26,8 +39,17 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+const link = split(
+  ({ query }) => {
+    const { kind, operation } = getMainDefinition(query);
+    return kind === "OperationDefinition" && operation === "subscription";
+  },
+  wsLink,
+  authLink.concat(httpLink)
+);
+
 const client = new ApolloClient({
-  link: authLink.concat(httpLink), // Add this
+  link,
   cache: new InMemoryCache(),
 });
 
