@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation, gql } from "@apollo/client";
 import { useHistory } from "react-router";
 import { FEED_QUERY } from "./LinkList";
+import { LINKS_PER_PAGE } from "../constants";
 
 const CREATE_LINK_MUTATION = gql`
   mutation PostMutation($description: String!, $url: String!) {
@@ -13,6 +14,10 @@ const CREATE_LINK_MUTATION = gql`
     }
   }
 `;
+
+const take = LINKS_PER_PAGE;
+const skip = 0;
+const orderBy = { createdAt: "desc" };
 
 const CreateLink = () => {
   const history = useHistory();
@@ -28,8 +33,14 @@ const CreateLink = () => {
       url: formState.url,
     },
     update: (cache, { data: { post } }) => {
+      // Problems with cache update
       const data = cache.readQuery({
         query: FEED_QUERY,
+        variables: {
+          take,
+          skip,
+          orderBy,
+        },
       });
       cache.writeQuery({
         query: FEED_QUERY,
@@ -37,6 +48,11 @@ const CreateLink = () => {
           feed: {
             links: [post, ...data.feed.links],
           },
+        },
+        variables: {
+          take,
+          skip,
+          orderBy,
         },
       });
     },
